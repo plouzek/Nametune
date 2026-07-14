@@ -439,7 +439,7 @@ async function loadPlaylists(){
     let items = [], url = "/me/playlists?limit=50";
     for(let i=0;i<3 && url;i++){
       const j = await api("GET", url);
-      items = items.concat(j.items.filter(Boolean));
+      items = items.concat(j.items.filter(p=>p && p.id));
       url = j.next ? j.next.replace("https://api.spotify.com/v1","") : null;
     }
     S.playlists = items;
@@ -448,7 +448,8 @@ async function loadPlaylists(){
     items.forEach(pl=>{
       const b = document.createElement("button");
       b.className = "pl";
-      b.innerHTML = `<img src="${(pl.images && pl.images[0]) ? pl.images[0].url : ''}" alt=""><span class="pl-name"></span><span class="pl-count">${pl.tracks.total} tracks</span>`;
+      const count = (pl.tracks && pl.tracks.total != null) ? pl.tracks.total + " tracks" : "";
+      b.innerHTML = `<img src="${(pl.images && pl.images[0]) ? pl.images[0].url : ''}" alt=""><span class="pl-name"></span><span class="pl-count">${count}</span>`;
       b.querySelector(".pl-name").textContent = pl.name;
       b.addEventListener("click", ()=>{
         document.querySelectorAll(".pl.selected").forEach(x=>x.classList.remove("selected"));
