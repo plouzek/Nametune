@@ -404,7 +404,7 @@ async function api(method, path, body){
   if(r.status === 401){ localStorage.removeItem(LS.token); throw new Error("Session expired — refresh the page and reconnect."); }
   const text = await r.text();
   const j = text ? JSON.parse(text) : null;
-  if(!r.ok) throw new Error((j && j.error && j.error.message) || ("Spotify error "+r.status));
+  if(!r.ok) throw new Error(((j && j.error && j.error.message) || "Spotify error") + " (" + r.status + " on " + path.split("?")[0] + ")");
   return j;
 }
 
@@ -448,7 +448,8 @@ async function loadPlaylists(){
     items.forEach(pl=>{
       const b = document.createElement("button");
       b.className = "pl";
-      const count = (pl.tracks && pl.tracks.total != null) ? pl.tracks.total + " tracks" : "";
+      const meta = pl.items || pl.tracks;
+      const count = (meta && meta.total != null) ? meta.total + " tracks" : "";
       b.innerHTML = `<img src="${(pl.images && pl.images[0]) ? pl.images[0].url : ''}" alt=""><span class="pl-name"></span><span class="pl-count">${count}</span>`;
       b.querySelector(".pl-name").textContent = pl.name;
       b.addEventListener("click", ()=>{
@@ -462,13 +463,15 @@ async function loadPlaylists(){
   }catch(e){ setStatus("lobby-status", e.message, true); }
 }
 async function loadTracks(pl){
-  let items = [], url = `/playlists/${pl.id}/tracks?limit=100&fields=next,items(track(uri,name,duration_ms,is_local,type,artists(name),album(images)))`;
+  let items = [], url = `/playlists/${pl.id}/items?limit=100`;
   for(let i=0;i<3 && url;i++){
     const j = await api("GET", url);
-    items = items.concat(j.items);
-    url = j.next ? j.next.replace("https://api.spotify.com/v1","") : null;
+    items = items.concat((j && j.items) || []);
+    url = (j && j.next) ? j.next.replace("https://api.spotify.com/v1","") : null;
   }
-  return items.map(x=>x.track).filter(t=>t && t.type==="track" && !t.is_local && t.duration_ms > 30000);
+  const tracks = items.map(x=>x && (x.item || x.track)).filter(t=>t && t.type==="track" && !t.is_local && t.duration_ms > 30000);
+  if(!tracks.length && items.length === 0) throw new Error("Spotify only lets the game read playlists you own or collaborate on — pick one you made yourself.");
+  return tracks;
 }
 
 /* ============================== GAME FLOW ============================== */
