@@ -321,6 +321,7 @@ footer{margin-top:26px;text-align:center}
 "use strict";
 /* ============================== CONFIG ============================== */
 const REDIRECT_URI = location.origin + location.pathname;
+const DEFAULT_CLIENT_ID = "07b42e9525e44be3b3a5f85603ccba6f";
 const SCOPES = "streaming user-read-email user-read-private user-read-playback-state user-modify-playback-state playlist-read-private playlist-read-collaborative";
 const COLORS = ["var(--buzz)","var(--teal)","var(--violet)"];
 const LS = { client:"ntt_client_id", verifier:"ntt_verifier", token:"ntt_token" };
@@ -728,7 +729,7 @@ $("btn-refresh-devices").addEventListener("click", async ()=>{
 /* ============================== BOOT ============================== */
 (async function boot(){
   if(/Android|iPhone|iPad|Mobile/i.test(navigator.userAgent)) $("set-output").value = "connect";
-  S.clientId = localStorage.getItem(LS.client);
+  S.clientId = localStorage.getItem(LS.client) || DEFAULT_CLIENT_ID;
   if(S.clientId) $("client-id").value = S.clientId;
   try{ S.token = JSON.parse(localStorage.getItem(LS.token)); }catch(e){ S.token=null; }
 
